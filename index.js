@@ -1,0 +1,128 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+const puppeteer = require("puppeteer");
+const cheerio = require("cheerio");
+  const fs = require("fs");
+
+const app = express();
+const port = 3000;
+app.use(bodyParser.json());
+
+app.get("/:id", async (req, res) => {
+  const userInput = req.params.id;
+
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto("https://kaliaportal.odisha.gov.in/TrackToken.aspx"); 
+
+  
+  await page.type("#txttokenNo", userInput); 
+  await page.click("#Btn_Show"); 
+
+  await page.waitForSelector("#viewpart"); 
+
+  
+  try {
+    const result = await page.evaluate(
+      () => document.querySelector("#viewpart").innerHTML
+    );
+    
+    const htmlContent = result;
+    const $ = cheerio.load(htmlContent);
+
+    
+    let extractedData = {
+        personalDetails: {},
+        onlineGrievanceApplicationStatus: "",
+        eligibilityStatus: {},
+        paymentAccountDetails: "",
+        reasonsOfIneligibility: [],
+    };
+
+    
+    $("table")
+        .eq(0)
+        .find("tr")
+        .each((i, el) => {
+        if (i > 0) {
+            
+            const key = $(el).find("td").eq(0).text().trim();
+            const value = $(el).find("td").eq(1).find("span").text().trim();
+            if (key && value) {
+            extractedData.personalDetails[key] = value;
+            }
+            
+            const key2 = $(el).find("td").eq(2).text().trim();
+            const value2 = $(el).find("td").eq(3).find("span").text().trim();
+            if (key2 && value2) {
+            extractedData.personalDetails[key2] = value2;
+            }
+        }
+        });
+
+    
+    const grievanceStatus = $("table")
+        .eq(1)
+        .find("tr")
+        .eq(1)
+        .find("td")
+        .text()
+        .trim();
+    if (grievanceStatus) {
+        extractedData.onlineGrievanceApplicationStatus = grievanceStatus;
+    }
+
+    
+    $("table")
+        .eq(2)
+        .find("tr")
+        .each((i, el) => {
+        if (i === 1) {
+            const key = $(el).find("td").eq(0).text().trim();
+            const value = $(el).find("td").eq(1).find("span").text().trim();
+            if (key && value) {
+            extractedData.eligibilityStatus[key] = value;
+            }
+        }
+        });
+
+    
+    $("#grdineligible tr").each((i, el) => {
+        if (i > 0) {
+        
+        const reason = $(el).find("td").eq(1).text().trim();
+        if (reason) {
+            extractedData.reasonsOfIneligibility.push(reason);
+        }
+        }
+    });
+
+    
+    const paymentDetailsStatus = $("table")
+        .last()
+        .find("tr")
+        .eq(1)
+        .find("td")
+        .text()
+        .trim();
+    if (paymentDetailsStatus) {
+        extractedData.paymentAccountDetails = paymentDetailsStatus;
+    }
+
+   
+    console.log(JSON.stringify(extractedData, null, 2))
+    
+    res.send(JSON.stringify(extractedData, null, 2));
+
+} catch (error) {
+    console.log(error);
+  }
+
+  await browser.close();
+});
+
+
+
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
