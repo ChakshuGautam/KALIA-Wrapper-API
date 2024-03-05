@@ -31,7 +31,7 @@ app.get("/:id", async (req, res) => {
       personalDetails: {},
       onlineGrievanceApplicationStatus: "",
       eligibilityStatus: {},
-      paymentAccountDetails: {},
+      paymentAccountDetails: [],
       reasonsOfIneligibility: [],
     };
 
@@ -87,20 +87,31 @@ app.get("/:id", async (req, res) => {
       }
     });
 
-    const paymentDetailsStatus = $("table").last().find("tr").eq(1);
+    const paymentDetailsTables = $("table").slice(4);
 
-    if (paymentDetailsStatus) {
-      const key = paymentDetailsStatus.find("td").eq(0).text().trim();
-      const value = paymentDetailsStatus
-        .find("td")
-        .eq(1)
-        .find("span")
-        .text()
-        .trim();
-      if (key && value) {
-        extractedData.paymentAccountDetails[key] = value;
-      }
-    }
+    const paymentDetails = []
+
+    paymentDetailsTables.each((idx, table) => {
+      const tableData = {}
+      $(table).find("tr").each((rowIdx, tableRow) => {
+        if(rowIdx == 0) {
+          return;
+        }
+        const key1 = $(tableRow).find("td").eq(0).text().trim();
+        const value1 = $(tableRow).find("td").eq(1).find("span").text().trim()
+        const key2 = $(tableRow).find("td").eq(2).text().trim();
+        const value2 = $(tableRow).find("td").eq(3).find("span").text().trim()
+        if(key1 && value1) {
+          tableData[key1] = value1;
+        }
+        if(key2 && value2) {
+          tableData[key2] = value2;
+        }
+      })
+      paymentDetails.push(tableData);
+    })
+
+    extractedData.paymentAccountDetails = paymentDetails
 
     console.log(JSON.stringify(extractedData, null, 2));
 
