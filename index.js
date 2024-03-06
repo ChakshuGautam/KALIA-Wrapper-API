@@ -1,17 +1,22 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const puppeteer = require("puppeteer");
+const browserManager = require("./browserManager");
 const cheerio = require("cheerio");
-const fs = require("fs");
 
 const app = express();
 const port = 3000;
+let browser = null;
 app.use(bodyParser.json());
+
 
 app.get("/:id", async (req, res) => {
   const userInput = req.params.id;
   try {
-    const browser = await puppeteer.launch();
+
+    if(!browser) {
+      browser = await browserManager.launchBrowser();
+    }
+
     const page = await browser.newPage();
     await page.goto("https://kaliaportal.odisha.gov.in/TrackToken.aspx");
 
@@ -121,11 +126,30 @@ app.get("/:id", async (req, res) => {
     console.log(JSON.stringify(extractedData, null, 2));
 
     res.json(extractedData);
-    await browser.close();
+    await page.close();
   } catch (error) {
     console.log(error);
   }
 });
+
+const closeBrowser = async () => {
+  if(browser) {
+    await browser.close();
+    browser = null;
+  }
+}
+
+app.on('close', closeBrowser)
+
+process.on('SIGINT', async () => {
+  await closeBrowser();
+  process.exit();
+})
+
+process.on('SIGTERM', async () => {
+  await closeBrowser();
+  process.exit();
+})
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
