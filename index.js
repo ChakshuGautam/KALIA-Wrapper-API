@@ -120,8 +120,7 @@ app.get("/:id", async (req, res) => {
 
     console.log(JSON.stringify(extractedData, null, 2));
 
-    res.send(JSON.stringify(extractedData, null, 2));
-
+    res.json(extractedData);
     await browser.close();
   } catch (error) {
     console.log(error);
