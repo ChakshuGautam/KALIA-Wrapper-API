@@ -94,18 +94,23 @@ app.get("/:id", async (req, res) => {
     paymentDetailsTables.each((idx, table) => {
       const tableData = {}
       $(table).find("tr").each((rowIdx, tableRow) => {
+        
+        // skip header row of every paymentInstallment table
         if(rowIdx == 0) {
           return;
         }
-        const key1 = $(tableRow).find("td").eq(0).text().trim();
-        const value1 = $(tableRow).find("td").eq(1).find("span").text().trim()
-        const key2 = $(tableRow).find("td").eq(2).text().trim();
-        const value2 = $(tableRow).find("td").eq(3).find("span").text().trim()
-        if(key1 && value1) {
-          tableData[key1] = value1;
+
+        // Each paymentInstallment row has two key-value pairs describing the current installment data
+        const paymentInstallmentKey1 = $(tableRow).find("td").eq(0).text().trim();
+        const paymentInstallmentValue1 = $(tableRow).find("td").eq(1).find("span").text().trim()
+        const paymentInstallmentKey2 = $(tableRow).find("td").eq(2).text().trim();
+        const paymentInstallmentValue2 = $(tableRow).find("td").eq(3).find("span").text().trim()
+
+        if(paymentInstallmentKey1 && paymentInstallmentValue1) {
+          tableData[paymentInstallmentKey1] = paymentInstallmentValue1;
         }
-        if(key2 && value2) {
-          tableData[key2] = value2;
+        if(paymentInstallmentKey2 && paymentInstallmentValue2) {
+          tableData[paymentInstallmentKey2] = paymentInstallmentValue2;
         }
       })
       paymentDetails.push(tableData);
