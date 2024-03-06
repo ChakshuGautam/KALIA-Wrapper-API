@@ -31,7 +31,7 @@ app.get("/:id", async (req, res) => {
       personalDetails: {},
       onlineGrievanceApplicationStatus: "",
       eligibilityStatus: {},
-      paymentAccountDetails: {},
+      paymentAccountDetails: [],
       reasonsOfIneligibility: [],
     };
 
@@ -87,20 +87,36 @@ app.get("/:id", async (req, res) => {
       }
     });
 
-    const paymentDetailsStatus = $("table").last().find("tr").eq(1);
+    const paymentDetailsTables = $("table").slice(4);
 
-    if (paymentDetailsStatus) {
-      const key = paymentDetailsStatus.find("td").eq(0).text().trim();
-      const value = paymentDetailsStatus
-        .find("td")
-        .eq(1)
-        .find("span")
-        .text()
-        .trim();
-      if (key && value) {
-        extractedData.paymentAccountDetails[key] = value;
-      }
-    }
+    const paymentDetails = []
+
+    paymentDetailsTables.each((idx, table) => {
+      const tableData = {}
+      $(table).find("tr").each((rowIdx, tableRow) => {
+        
+        // skip header row of every paymentInstallment table
+        if(rowIdx == 0) {
+          return;
+        }
+
+        // Each paymentInstallment row has two key-value pairs describing the current installment data
+        const paymentInstallmentKey1 = $(tableRow).find("td").eq(0).text().trim();
+        const paymentInstallmentValue1 = $(tableRow).find("td").eq(1).find("span").text().trim()
+        const paymentInstallmentKey2 = $(tableRow).find("td").eq(2).text().trim();
+        const paymentInstallmentValue2 = $(tableRow).find("td").eq(3).find("span").text().trim()
+
+        if(paymentInstallmentKey1 && paymentInstallmentValue1) {
+          tableData[paymentInstallmentKey1] = paymentInstallmentValue1;
+        }
+        if(paymentInstallmentKey2 && paymentInstallmentValue2) {
+          tableData[paymentInstallmentKey2] = paymentInstallmentValue2;
+        }
+      })
+      paymentDetails.push(tableData);
+    })
+
+    extractedData.paymentAccountDetails = paymentDetails
 
     console.log(JSON.stringify(extractedData, null, 2));
 
