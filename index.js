@@ -139,7 +139,6 @@ app.get("/:id", async (req, res) => {
 
       res.json(extractedData);
     } else {
-      res.status(400);
       res.json({
         message: "Invalid aadhaar number"
       })
