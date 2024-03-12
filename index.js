@@ -71,16 +71,24 @@ app.get("/:id", async (req, res) => {
           }
         });
 
-      const grievanceStatus = $("table")
-        .eq(1)
-        .find("tr")
-        .eq(1)
-        .find("td")
-        .text()
-        .trim();
-      if (grievanceStatus) {
-        extractedData.onlineGrievanceApplicationStatus = grievanceStatus;
+      const grievanceStatus = {}
+      const grievanceStatusTableRows = $("table").eq(1).find("tr").slice(1);
+      if(grievanceStatusTableRows.length > 1) {
+        grievanceStatusTableRows.each((idx, row) => {
+          const grievanceStatusKey1 = $(row).find("td").eq(0).text().trim();
+          const grievanceStatusValue1 = $(row).find("td").eq(1).find("span").text().trim();
+          grievanceStatus[grievanceStatusKey1] = grievanceStatusValue1
+          if(idx < 3) {
+            const grievanceStatusKey2 = $(row).find("td").eq(2).text().trim();
+            const grievanceStatusValue2 = $(row).find("td").eq(3).find("span").text().trim();
+            grievanceStatus[grievanceStatusKey2] = grievanceStatusValue2
+          }
+        })
+      } else {
+        grievanceStatus["message"] = "No data found"
       }
+
+      extractedData.onlineGrievanceApplicationStatus = grievanceStatus;
 
       $("table")
         .eq(2)
